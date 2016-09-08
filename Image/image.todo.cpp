@@ -23,7 +23,20 @@ int Image32::Brighten(const float& brightness,Image32& outputImage) const
 
 int Image32::Luminance(Image32& outputImage) const
 {
-	return 0;
+	outputImage.setSize(w, h);
+	for (int y = 0; y < h; y++)
+	{
+		for (int x = 0; x < w; x++)
+		{
+			const Pixel32& pixelIn = this->pixel(x, y);
+			unsigned char luminance = round(0.3 * pixelIn.r + 0.59 * pixelIn.g + 0.11 * pixelIn.b);
+
+			Pixel32& pixelOut = outputImage(x, y);
+			pixelOut.a = pixelIn.a;
+			pixelOut.r = pixelOut.g = pixelOut.b = luminance;
+		}
+	}
+	return 1;
 }
 
 int Image32::Contrast(const float& contrast,Image32& outputImage) const
