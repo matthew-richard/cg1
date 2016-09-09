@@ -18,14 +18,27 @@ int Image32::AddRandomNoise(const float& noise,Image32& outputImage) const
 }
 int Image32::Brighten(const float& brightness,Image32& outputImage) const
 {
-	return 0;
+	outputImage.setSize(w, h);
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++)
+		{
+			const Pixel32& pixelIn = this->pixel(x, y);
+			Pixel32& pixelOut = outputImage(x, y);
+			pixelOut.a = pixelIn.a;
+
+			// scale rgb and clamp to [0, 255]
+			pixelOut.r = fmax(fmin(pixelIn.r * brightness, 255), 0);
+			pixelOut.g = fmax(fmin(pixelIn.g * brightness, 255), 0);
+			pixelOut.b = fmax(fmin(pixelIn.b * brightness, 255), 0);
+		}
+	}
+	return 1;
 }
 
 int Image32::Luminance(Image32& outputImage) const
 {
 	outputImage.setSize(w, h);
-	for (int y = 0; y < h; y++)
-	{
+	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++)
 		{
 			const Pixel32& pixelIn = this->pixel(x, y);
@@ -41,7 +54,33 @@ int Image32::Luminance(Image32& outputImage) const
 
 int Image32::Contrast(const float& contrast,Image32& outputImage) const
 {
-	return 0;
+	outputImage.setSize(w, h);
+
+	// Compute average luminance
+	float avgLuminance = 0;
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++)
+		{
+			const Pixel32& pixelIn = this->pixel(x, y);
+			float luminance = 0.3 * pixelIn.r + 0.59 * pixelIn.g + 0.11 * pixelIn.b;
+			avgLuminance += luminance / (w * h);
+		}
+	}
+
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++)
+		{
+			const Pixel32& pixelIn = this->pixel(x, y);
+			Pixel32& pixelOut = outputImage(x, y);
+			pixelOut.a = pixelIn.a;
+
+			// Adjust contrast and clamp to [0, 255]
+			pixelOut.r = fmax(fmin(round(avgLuminance + contrast * (pixelIn.r - avgLuminance)), 255), 0);
+			pixelOut.g = fmax(fmin(round(avgLuminance + contrast * (pixelIn.g - avgLuminance)), 255), 0);
+			pixelOut.b = fmax(fmin(round(avgLuminance + contrast * (pixelIn.b - avgLuminance)), 255), 0);
+		}
+	}
+	return 1;
 }
 
 int Image32::Saturate(const float& saturation,Image32& outputImage) const
