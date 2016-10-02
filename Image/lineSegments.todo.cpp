@@ -5,6 +5,10 @@
 ////////////////////////////
 // Image processing stuff //
 ////////////////////////////
+float dot(const float& x1, const float& y1, const float& x2, const float& y2);
+float dist(const float& x1, const float& y1, const float& x2, const float& y2);
+float norm(const float& x, const float& y);
+
 float OrientedLineSegment::length(void) const
 {
 	return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
@@ -70,5 +74,5 @@ float dist(const float& x1, const float& y1, const float& x2, const float& y2)
 
 float norm(const float& x, const float& y)
 {
-	sqrt(x * x + y * y);
+	return sqrt(x * x + y * y);
 }

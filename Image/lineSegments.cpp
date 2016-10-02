@@ -4,8 +4,8 @@
 /////////////////////////
 // OrientedLineSegment //
 /////////////////////////
-const float OrientedLineSegment::A=1;
-const float OrientedLineSegment::B=1;
+const float OrientedLineSegment::A=0.00001;
+const float OrientedLineSegment::B=2;
 const float OrientedLineSegment::P=1;
 
 OrientedLineSegment::OrientedLineSegment(void){x1=x2=y1=y2=0;}

@@ -5,6 +5,13 @@
 ////////////////////////////
 // Image processing stuff //
 ////////////////////////////
+double Gaussian(const float& variance, const double& x);
+float Distance(const float& x1, const float& y1, const float& x2, const float& y2);
+float Clamp32(const float& x);
+float ClampF(const float& x);
+float Mirror(const int& x, const int& cutoff);
+
+
 Pixel::Pixel(const Pixel32& p)
 {
 	a = p.a / (float)255;
@@ -171,12 +178,10 @@ int Image32::RotateGaussian(const float& angle,Image32& outputImage) const
 
 int Image32::SetAlpha(const Image32& matte)
 {
-	setSize(matte.width(), matte.height());
-
 	for (int u = 0; u < width(); u++)
 	for (int v = 0; v < height(); v++)
 	{
-		// Use maximum channel to specifiy alpha. In practice only one channel will
+		// Use maximum channel to specify alpha. In practice only one channel will
 		// be used, so this will work regardless of whether it's r g or b.
 		pixel(u, v).a = fmax(matte.pixel(u, v).r, fmax(matte.pixel(u, v).g, matte.pixel(u, v).b));
 	}
@@ -185,7 +190,23 @@ int Image32::SetAlpha(const Image32& matte)
 
 int Image32::Composite(const Image32& overlay,Image32& outputImage) const
 {
-	return 0;
+	outputImage.setSize(width(), height());
+	for (int u = 0; u < width(); u++)
+	for (int v = 0; v < height(); v++)
+	{
+		Pixel32& p = outputImage.pixel(u, v);
+		const Pixel32& s = pixel(u, v);
+		const Pixel32& o = overlay.pixel(u, v);
+
+		float overlay_alpha = o.a / (float)255;
+		float source_alpha = (1 - overlay_alpha) * (s.a / (float) 255);
+		p.a = Clamp32((overlay_alpha + source_alpha) * 255);
+		p.r = Clamp32(overlay_alpha * o.r + source_alpha * s.r );
+		p.g = Clamp32(overlay_alpha * o.g + source_alpha * s.g);
+		p.b = Clamp32(overlay_alpha * o.b + source_alpha * s.b);
+	}
+
+	return 1;
 }
 
 int Image32::CrossDissolve(const Image32& source,const Image32& destination,const float& blendWeight,Image32& ouputImage)
@@ -207,17 +228,28 @@ int Image32::CrossDissolve(const Image32& source,const Image32& destination,cons
 }
 int Image32::Warp(const OrientedLineSegmentPairs& olsp,Image32& outputImage) const
 {
-	// warp constants
-	float a = 0.000001;
-	float b = 0.5;
-	float c = 0.9;
-
+	outputImage.setSize(width(), height());
 	for (int u = 0; u < width(); u++)
 	for (int v = 0; v < height(); v++)
 	{
 		float sourceX, sourceY;
 		olsp.getSourcePosition(u, v, sourceX, sourceY);
-		Pixel32 warped = BilinearSample(sourceX, sourceY);
+		Pixel32 warped;
+		
+		if (sourceX < 0 || sourceX >= width() - 1 || sourceY < 0 || sourceY >= height() - 1)
+		{
+			// If sample is out of image bounds, use nearest pixel
+			if (sourceX >= 0 && sourceX < width() - 1)
+				warped = BilinearSample(sourceX, sourceY < 0 ? 0 : height() - 1);
+			else if (sourceY >= 0 && sourceY < height() - 1)
+				warped = BilinearSample(sourceX < 0 ? 0 : width() - 1, sourceY);
+			else
+				warped = BilinearSample(sourceX < 0 ? 0 : width() - 1, sourceY < 0 ? 0 : height() - 1);
+		}
+		else
+		{
+			warped = BilinearSample(sourceX, sourceY);
+		}
 
 		Pixel32& p = outputImage.pixel(u, v);
 		p.a = warped.a;
@@ -263,19 +295,19 @@ Pixel32 Image32::NearestSample(const float& x,const float& y) const
 Pixel32 Image32::BilinearSample(const float& x,const float& y) const
 {
 	Pixel32 pixel_out;
-	if (x < 0 || x >= width() - 1 || y < 0 || y >= height() - 1)
-	{
-		pixel_out.a = 1;
-		pixel_out.r = 0;
-		pixel_out.g = 0;
-		pixel_out.b = 0;
-		return pixel_out;
-	}
+
 
 	int x1 = floor(x);
 	int x2 = x1 + 1;
 	int y1 = floor(y);
 	int y2 = y1 + 1;
+
+	// Pixels outside the image are mirrored
+	x1 = Mirror(x1, width());
+	x2 = Mirror(x2, width());
+	y1 = Mirror(y1, height());
+	y2 = Mirror(y2, height());
+
 
 	float dx = x - x1;
 
@@ -340,7 +372,27 @@ double Gaussian(const float& variance, const double& x)
 	return 1 / sqrt(2 * variance * PI)  *  exp(-pow(x, 2) / (2 * variance));
 }
 
-double Distance(const float& x1, const float&& y1, const float& x2, const float& y2)
+float Distance(const float& x1, const float& y1, const float& x2, const float& y2)
 {
 	return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+}
+
+float Clamp32(const float& x)
+{
+	return fmax(0, fmin(x, 255));
+}
+
+float ClampF(const float& x)
+{
+	return fmax(0, fmin(x, 1));
+}
+
+float Mirror(const int& x, const int& cutoff)
+{
+	bool negative = x < 0;
+	bool odd = (x / cutoff) % 2 == 1;
+	if ((!negative && odd) || (negative && !odd))
+		return (cutoff - 1) - (x % cutoff);
+	else
+		return x % cutoff;
 }
