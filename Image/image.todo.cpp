@@ -22,10 +22,10 @@ Pixel::Pixel(const Pixel32& p)
 }
 Pixel32::Pixel32(const Pixel& p)
 {
-	a = (int)round(p.a * 255);
-	r = (int)round(p.r * 255);
-	g = (int)round(p.g * 255);
-	b = (int)round(p.b * 255);
+	a = (int)round(ClampF(p.a) * 255);
+	r = (int)round(ClampF(p.r) * 255);
+	g = (int)round(ClampF(p.g) * 255);
+	b = (int)round(ClampF(p.b) * 255);
 }
 
 int Image32::AddRandomNoise(const float& noise,Image32& outputImage) const
@@ -135,7 +135,19 @@ int Image32::Saturate(const float& saturation,Image32& outputImage) const
 
 int Image32::Quantize(const int& bits,Image32& outputImage) const
 {
-	return 0;
+	outputImage.setSize(width(), height());
+	for (int u = 0; u < width(); u++)
+	for (int v = 0; v < height(); v++)
+	{
+		const Pixel32& p = pixel(u, v);
+		Pixel32& o = outputImage.pixel(u, v);
+
+		o.a = (int)round(round(p.a / (float)255 * ((1 << bits) - 1)) * (float)255 / (float)((1 << bits) - 1));
+		o.r = (int)round(round(p.r / (float)255 * ((1 << bits) - 1)) * (float)255 / (float)((1 << bits) - 1));
+		o.g = (int)round(round(p.g / (float)255 * ((1 << bits) - 1)) * (float)255 / (float)((1 << bits) - 1));;
+		o.b = (int)round(round(p.b / (float)255 * ((1 << bits) - 1)) * (float)255 / (float)((1 << bits) - 1));;
+	}
+	return 1;
 }
 
 int Image32::RandomDither(const int& bits,Image32& outputImage) const
@@ -154,12 +166,64 @@ int Image32::FloydSteinbergDither(const int& bits,Image32& outputImage) const
 
 int Image32::Blur3X3(Image32& outputImage) const
 {
-	return 0;
+	// Gaussian kernel
+	const float window[3][3] = { {1/16.0, 1/8.0, 1/16.0},
+								 {1/8.0,  1/4.0, 1/8.0},
+								 {1/16.0, 1/8.0, 1/16.0} };
+
+	outputImage.setSize(width(), height());
+	for (int u = 0; u < width(); u++)
+	for (int v = 0; v < height(); v++)
+	{
+		Pixel o;
+		o.a = o.r = o.g = o.b = 0;
+
+		for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			Pixel p = Pixel(pixel(Mirror(u + i - 1, width()), Mirror(v + j - 1, height())));
+			const float& w = window[i][j];
+
+			o.a += p.a * w;
+			o.r += p.r * w;
+			o.g += p.g * w;
+			o.b += p.b * w;
+		}
+
+		outputImage.pixel(u, v) = Pixel32(o);
+	}
+	return 1;
 }
 
 int Image32::EdgeDetect3X3(Image32& outputImage) const
 {
-	return 0;
+	// Edge detection kernel
+	const float window[3][3] = { { -1 / 8.0, -1 / 8.0, -1 / 8.0 },
+								 { -1 / 8.0,  1.0, -1 / 8.0 },
+							     { -1 / 8.0, -1 / 8.0, -1 / 8.0 } };
+
+	outputImage.setSize(width(), height());
+	for (int u = 0; u < width(); u++)
+	for (int v = 0; v < height(); v++)
+	{
+		Pixel o;
+		o.a = o.r = o.g = o.b = 0;
+
+		for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			Pixel p = Pixel(pixel(Mirror(u + i - 1, width()), Mirror(v + j - 1, height())));
+			const float& w = window[i][j];
+
+			o.a += p.a * w;
+			o.r += p.r * w;
+			o.g += p.g * w;
+			o.b += p.b * w;
+		}
+
+		outputImage.pixel(u, v) = Pixel32(o);
+	}
+	return 1;
 }
 int Image32::ScaleNearest(const float& scaleFactor,Image32& outputImage) const
 {

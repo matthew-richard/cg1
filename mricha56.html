@@ -1,0 +1,47 @@
+<html><body>
+
+<h1>Computer Graphics Assigment 1</h1>
+<ul>
+<li>Matt Richard</li>
+<li>mricha56</li>
+<li>Microsoft Visual Studio for development / compilation</li>
+<li>Used 2 late days</li>
+</ul>
+
+<h2>Unimplemented portions</h2>
+Random, ordered, and Floyd-Steinberg dithers
+</ul>
+
+<h2>Composite w/ celebrity</h2>
+<p>The composite image of Trump and I <a href="mricha56_HTML/composite.bmp" target="_blank">composite.bmp</a> is created with the following command: <br/> <p/>
+<pre>./Assignment1.exe --in mricha56_HTML/trump.jpg --composite mricha56_HTML/me.jpg mricha56_HTML/matte.jpg --out mricha56_HTML/composite.bmp</pre>
+<br/>
+
+<img src="mricha56_HTML/composite.bmp" />
+<img src="mricha56_HTML/trump.jpg" />
+<img src="mricha56_HTML/me.jpg" />
+<img src="mricha56_HTML/matte.jpg" />
+<br/>
+
+<h2>Beier-Neely Morphing</h2>
+I used GIMP for Windows to make a looping .gif between the original F.bmp and F_scaled_2d.bmp. <br/>
+
+See <a href="mricha56_HTML/Fs" target="_blank">the Fs directory</a> for the 10 constituent pictures.
+<br/>
+<img src="mricha56_HTML/f_movie.gif" />
+<br>
+The pictures were generated using the following bash script:
+
+<pre>
+#!/bin/bash
+
+i=0
+
+while [ $i -lt 10 ]; do
+  ./Assignment1.exe --in mricha56_HTML/F.bmp --bnMorph mricha56_HTML/F_scaled_2d.bmp mricha56_HTML/f_multi_line_scale.txt 0.$i --out mricha56_HTML/Fs/$i.bmp
+  echo 0.$i
+  i=$[ $i + 1 ]
+done
+</pre>
+
+</body></html>
