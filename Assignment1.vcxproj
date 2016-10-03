@@ -83,8 +83,8 @@
     <TargetName>Assignment1</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\IMAGE_OUT\</OutDir>
-    <IntDir>.\IMAGE_OUT\</IntDir>
+    <OutDir>.</OutDir>
+    <IntDir>./IMAGE_OUT</IntDir>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
